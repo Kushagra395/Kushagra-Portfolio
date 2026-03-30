@@ -1,7 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import fallbackCalendar from '../data/calendar.json';
+import fallbackContest from '../data/contest.json';
+import fallbackBadges from '../data/badges.json';
 gsap.registerPlugin(ScrollTrigger);
+
+const fetchWithFallback = async (url, fallback, timeout = 6000) => {
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    if (!response.ok) throw new Error('Network error');
+    return await response.json();
+  } catch (err) {
+    console.warn(`Fetch using fallback for ${url}`);
+    return fallback;
+  }
+};
 
 // ── Calendar → heatmap grid (only past ~40 active weeks to avoid empty gaps) ──
 function calendarToGrid(cal) {
@@ -179,28 +196,28 @@ export default function CodingProfiles() {
   };
 
   useEffect(() => {
-    Promise.allSettled([
-      fetch('https://alfa-leetcode-api.onrender.com/Kushagra395/calendar').then(r => r.json()),
-      fetch('https://alfa-leetcode-api.onrender.com/userContestRankingInfo/Kushagra395').then(r => r.json()),
+    Promise.all([
+      fetchWithFallback('https://alfa-leetcode-api.onrender.com/Kushagra395/calendar', fallbackCalendar),
+      fetchWithFallback('https://alfa-leetcode-api.onrender.com/userContestRankingInfo/Kushagra395', fallbackContest),
     ]).then(([r1, r2]) => {
-      if (r1.status === 'fulfilled' && r1.value.submissionCalendar) {
+      if (r1 && r1.submissionCalendar) {
         let cal = {};
-        try { cal = JSON.parse(r1.value.submissionCalendar); } catch (e) {}
-        setLcStats({ ...r1.value, submissionCalendar: cal });
+        try { 
+          cal = typeof r1.submissionCalendar === 'string' ? JSON.parse(r1.submissionCalendar) : r1.submissionCalendar;
+        } catch (e) {}
+        setLcStats({ ...r1, submissionCalendar: cal });
         setHeatmap(calendarToGrid(cal));
       }
-      if (r2.status === 'fulfilled' && r2.value?.userContestRanking) setLcContest(r2.value);
+      if (r2 && r2.userContestRanking) setLcContest(r2);
     });
 
     // Fetch real LeetCode badges via alfa-leetcode-api (unblocks CORS and IP limits when run in browser)
-    fetch('https://alfa-leetcode-api.onrender.com/Kushagra395/badges')
-      .then(r => r.json())
+    fetchWithFallback('https://alfa-leetcode-api.onrender.com/Kushagra395/badges', fallbackBadges)
       .then(data => {
         if (data && data.badges && data.badges.length > 0) {
           setBadges(data.badges);
         }
-      })
-      .catch(() => {}); // fallback handles fails
+      });
   }, []);
 
   useEffect(() => {
