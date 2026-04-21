@@ -43,7 +43,7 @@ export default function Journey() {
                   <img src="/assets/glory.jpeg" alt="Glory Logo" className="w-8 h-8 object-contain" />
                   <h3 className="text-xl font-semibold text-[#1DCD9F]"> Frontend Intern @Glory Media</h3>
                 </div>
-                <span className="text-sm text-gray-400"> Jul 2025 - Jan 2025</span>
+                <span className="text-sm text-gray-400"> Jul 2025 - Jan 2026</span>
                 <p className="mt-2 text-gray-300">Contributed to the in house and client projects The RightTool, where I worked on the entire frontend and responsive UI part using Next.js and modern UI frameworks, the second is SuppAI, which is client based project where I created an interactive dashboard using React.js. using React and Tailwind CSS.</p>
               </div>
             </div>
